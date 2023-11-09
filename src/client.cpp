@@ -30,7 +30,7 @@ int main() {
 
   system("clear");
   cout << endl << "> Welcome " << current_user.name <<  endl;
-  cout << endl << "The chat started. To quit the app type :q" << endl << endl;
+  cout << endl << "Cuộc trò chuyện bắt đầu. Để thoát khỏi ứng dụng, hãy gõ :q" << endl << endl;
 
   thread receive_messages_thread(receive_messages);
   receive_messages_thread.detach();
@@ -44,12 +44,15 @@ void init() {
 
   if ((users_shmid < 0) || (users_count_shmid < 0)) {
     perror("shmget");
-    cout << "Unable to connect with the server!" << endl;
+    cout << "Không thể kết nối với máy chủ!" << endl;
 
     exit(1);
   }
 }
-
+/*
+Tạo một hàng đợi chia sẻ mới (ShmQueue) và trả về shmq_id của hàng đợi đó.
+ Hàng đợi chia sẻ được tạo bằng cách tạo một khóa ngẫu nhiên,
+  gắn kết với hàng đợi và sao chép hàng đợi mới tạo vào vùng nhớ chia sẻ.*/
 int create_shmq() {
   key_t key = rand();
   int shmq_id = shmget(key, sizeof(ShmQueue), 0666|IPC_CREAT);
@@ -60,7 +63,10 @@ int create_shmq() {
 
   return shmq_id;
 }
-
+/*
+Tạo một người dùng mới bằng cách yêu cầu người dùng nhập tên và tạo một hàng đợi chia sẻ cho người dùng đó.
+ Người dùng mới được sao chép vào danh sách người dùng chia sẻ và số lượng người dùng được tăng lên.
+*/
 void create_user() {
   User *users = att_users(users_shmid);
   int *users_count = att_users_count(users_count_shmid);
@@ -78,24 +84,27 @@ void create_user() {
   shmdt(users);
   shmdt(users_count);
 }
-
+/*
+ Hiển thị danh sách các người dùng đang hoạt động và yêu cầu người dùng chọn người dùng để chat
+ . Người dùng được chọn được sao chép vào tham số user_to_chat.
+*/
 void select_user(User* user_to_chat) {
   User *users = att_users(users_shmid);
   int *users_count = att_users_count(users_count_shmid);
 
   if(*users_count == 1) {
-    cout << endl << "0 Users online!" << endl;
+    cout << endl << "Không ai hoạt động" << endl;
   } else {
     users = att_users(users_shmid);
 
-    cout << endl << "Online users:" << endl;
+    cout << endl << "Đang hoạt động:" << endl;
     for (int i = 0; i < (*users_count); i++) {
       if (users[i].shmq_id == current_user.shmq_id) continue;
       cout << i << " - " << users[i].name << endl;
     }
 
     int user_to_chat_index;
-    cout << endl << "Select the user to chat: ";
+    cout << endl << "Chọn người dùng để chat: ";
     cin >> user_to_chat_index;
 
     memcpy(user_to_chat, &users[user_to_chat_index], sizeof(User));
@@ -104,7 +113,10 @@ void select_user(User* user_to_chat) {
   shmdt(users);
   shmdt(users_count);
 }
-
+/*
+Lặp vô hạn để nhận các tin nhắn mới từ hàng đợi chia sẻ của người dùng hiện tại
+. Nếu có tin nhắn, nó được in ra bằng print_message().
+*/
 void receive_messages() {
   while(true) {
     ShmQueue* shmq = att_shmq(current_user.shmq_id);
@@ -116,7 +128,10 @@ void receive_messages() {
     shmdt(shmq);
   }
 }
-
+/*
+ Lặp vô hạn để gửi các tin nhắn. Người dùng được yêu cầu nhập nội dung tin nhắn và chế độ gửi (nhóm hoặc riêng tư). 
+ Tin nhắn được gửi thông qua hàng đợi chia sẻ tương ứng với chế độ gử
+*/
 void send_messages() {
   while(true) {
     char text[200];
@@ -129,7 +144,7 @@ void send_messages() {
     if(strcmp(text, ":q") == 0) break;
     else if(strlen(message->text) != 0) {
       char message_mode = 'B';
-      cout << endl << "Select the message mode ([U]nicast or [B]roadcast): ";
+      cout << endl << "Bạn muốn nhắn nhóm (B) hay nhắn riêng (U): ";
       cin >> message_mode;
 
       if(message_mode == 'U' || message_mode == 'u') {
@@ -166,6 +181,9 @@ void send_messages() {
   }
 }
 
+/*
+In ra màn hình thông tin về một tin nhắn, bao gồm thời gian gửi, nguồn tin nhắn, chế độ và nội dung tin nhắn.
+*/
 void print_message(Message* message) {
   cout << endl << ctime(&message->sent_at);
   cout << " > " << message->source_name << " (" << message->mode << "): " << message->text << endl << endl;
