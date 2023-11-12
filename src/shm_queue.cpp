@@ -52,6 +52,7 @@ bool dequeue(ShmQueue* shmq, Message* dest_message) {
   return true;
 }
 // Kết nối và truy cập vào hàng đợi chia sẻ đã tồn tại dựa trên shmid.
+// shmid: là định danh của phân đoạn bộ nhớ chia sẻ và chính là giá trị trả về của lệnh gọi hệ thống shmget ().
 ShmQueue* att_shmq(int shmid) {
   return (ShmQueue*) shmat(shmid, NULL, 0);
 }

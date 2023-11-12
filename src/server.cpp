@@ -25,6 +25,7 @@ void process_new_users();
 Hàm chính của chương trình. Trong vòng lặp vô hạn, 
 nó gọi hàm process_new_users() để xử lý người dùng mới
  và  kiểm tra kill_server_flag để kiểm tra xem có yêu cầu dừng máy chủ hay không.*/
+// Lệnh gọi hệ thống trên giúp thực hiện thao tác điều khiển cho một phân đoạn bộ nhớ chia sẻ với:
 int main() {
   init();
 
@@ -37,6 +38,8 @@ int main() {
       User *users = att_users(users_shmid);
       int *users_count = att_users_count(users_count_shmid);
       for (int i = 0; i < (*users_count); i++) {
+
+// IPC_RMID - Đánh dấu phân đoạn sẽ bị hủy. Phân đoạn chỉ bị phá hủy sau khi tiến trình cuối cùng đã tách nó ra.
 
         ShmQueue* shmq = (ShmQueue*) shmat(users[i].shmq_id, NULL, 0);
         shmctl(shmq->messages_list_shmid, IPC_RMID, NULL);
@@ -70,6 +73,7 @@ void init() {
 
   int *users_count = att_users_count(users_count_shmid);
   *users_count = 0;
+  // Sau khi tiến trình của bạn được hoàn thành với việc sử dụng bộ nhớ chia sẻ thì bạn có sẽ cần tách nó ra khỏi bộ nhớ chia sẻ
   shmdt(users_count);
 
   cout << "Use Ctrl-C to stop\n" << endl;
