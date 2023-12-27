@@ -21,11 +21,7 @@ int old_count = 0;
 void init();
 void sigint_handler(int sig_num);
 void process_new_users();
-/*
-Hàm chính của chương trình. Trong vòng lặp vô hạn, 
-nó gọi hàm process_new_users() để xử lý người dùng mới
- và  kiểm tra kill_server_flag để kiểm tra xem có yêu cầu dừng máy chủ hay không.*/
-// Lệnh gọi hệ thống trên giúp thực hiện thao tác điều khiển cho một phân đoạn bộ nhớ chia sẻ với:
+
 int main() {
   init();
 
@@ -38,8 +34,6 @@ int main() {
       User *users = att_users(users_shmid);
       int *users_count = att_users_count(users_count_shmid);
       for (int i = 0; i < (*users_count); i++) {
-
-// IPC_RMID - Đánh dấu phân đoạn sẽ bị hủy. Phân đoạn chỉ bị phá hủy sau khi tiến trình cuối cùng đã tách nó ra.
 
         ShmQueue* shmq = (ShmQueue*) shmat(users[i].shmq_id, NULL, 0);
         shmctl(shmq->messages_list_shmid, IPC_RMID, NULL);
@@ -61,10 +55,7 @@ int main() {
 
   return 0;
 }
-/*
-hởi tạo các giá trị ban đầu cho máy chủ. Nó đặt giá trị kill_server_flag thành false,
- xóa màn hình, gán số lượng người dùng ban đầu là 0
-  và thiết lập xử lý tín hiệu SIGINT để bắt sự kiện tắt máy chủ.*/
+
 void init() {
   srand(time(NULL));
 
@@ -73,21 +64,16 @@ void init() {
 
   int *users_count = att_users_count(users_count_shmid);
   *users_count = 0;
-  // Sau khi tiến trình của bạn được hoàn thành với việc sử dụng bộ nhớ chia sẻ thì bạn có sẽ cần tách nó ra khỏi bộ nhớ chia sẻ
   shmdt(users_count);
 
   cout << "Use Ctrl-C to stop\n" << endl;
   signal(SIGINT, sigint_handler);
 
 }
-/*
-Xử lý sự kiện tắt máy chủ bằng cách thiết lập kill_server_flag thành true.*/
 void sigint_handler(int sig_num) {
   kill_server_flag = true;
 }
-/*
-Xử lý người dùng mới. Nó kiểm tra xem số lượng người dùng có thay đổi so với lần chạy trước không. 
-Nếu có, nó in ra thông tin người dùng mới đăng nhập vào máy chủ.*/
+
 void process_new_users() {
   User *users = att_users(users_shmid);
   int *users_count = att_users_count(users_count_shmid);
@@ -98,7 +84,7 @@ void process_new_users() {
 
       time_t now = time(0);
       cout << ctime(&now) << " > ";
-      cout << user.name << " logged on the server\n" <<  endl;  
+      cout << user.name << " đã đăng nhập\n" <<  endl;  
     }
 
     old_count = (*users_count);
