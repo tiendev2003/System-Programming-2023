@@ -9,6 +9,7 @@
 typedef struct {
   int shmq_id;
   char name[50];
+  char password[50];
 } User;
 
 extern key_t users_key;
